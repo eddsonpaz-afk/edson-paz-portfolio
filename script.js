@@ -1,1 +1,31 @@
-const observer=new IntersectionObserver((entries)=>{entries.forEach((entry)=>{if(entry.isIntersecting){entry.target.classList.add('in-view')}})},{threshold:.15});document.querySelectorAll('.case,.number-card,.about-grid,.stack-list>div').forEach((el)=>observer.observe(el));
+const q=(s,p=document)=>p.querySelector(s),qa=(s,p=document)=>[...p.querySelectorAll(s)];
+
+const revealObserver=new IntersectionObserver((entries)=>{entries.forEach((entry)=>{if(entry.isIntersecting){entry.target.classList.add('in-view');revealObserver.unobserve(entry.target)}})},{threshold:.14});
+qa('.case,.number-card,.timeline-track article').forEach(el=>revealObserver.observe(el));
+
+const counters=qa('.counter');
+const counterObserver=new IntersectionObserver((entries)=>{entries.forEach(({target,isIntersecting})=>{if(!isIntersecting)return;const end=parseFloat(target.dataset.target||'0');const decimals=parseInt(target.dataset.decimals||'0',10);const prefix=target.dataset.prefix||'';const suffix=target.dataset.suffix||'';const start=performance.now();const duration=1400;const tick=(now)=>{const p=Math.min((now-start)/duration,1);const eased=1-Math.pow(1-p,3);const value=end*eased;let text=value.toFixed(decimals).replace('.',',');target.textContent=`${prefix}${text}${suffix}`;if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick);counterObserver.unobserve(target)})},{threshold:.55});
+counters.forEach(el=>counterObserver.observe(el));
+
+const cases={
+  performance:{kicker:'CASE 01 / PERFORMANCE / GROWTH',title:'Performance que sai do achismo e entra nos dados.',problem:'Campanhas com baixa eficiência, CTR de 0,59% e CPL de R$ 24,39, dificultando escala e previsibilidade.',strategy:'Reorganizar mídia e funil, trabalhar hipóteses por campanha e tomar decisões a partir de indicadores, não de sensação.',execution:'Otimização de Meta e Google Ads, leitura recorrente de CTR, CPC e CPL, ajustes de criativo, segmentação e distribuição de verba.',result:'CTR elevado para 2,56% e CPL reduzido para R$ 9,60 em períodos de referência, criando uma operação muito mais eficiente.'},
+  ecosystem:{kicker:'CASE 02 / PRODUTO / IA / AUTOMAÇÃO',title:'Ferramentas que transformam marketing em infraestrutura.',problem:'Vendas e operação dependiam de conhecimento disperso, tarefas manuais e respostas que demoravam para chegar ao time e ao cliente.',strategy:'Transformar conhecimento de produto e processo em ferramentas simples, utilizáveis e orientadas a tarefas reais.',execution:'Criação do Solda Certa, Fixa Certo, Andaime Certo e Pedido Certo, conectando conteúdo, cálculo, apoio à venda e automação.',result:'Um ecossistema de ferramentas que amplia capacidade do time, reduz fricção operacional e aproxima marketing da rotina comercial.'},
+  midas:{kicker:'CASE 03 / DADOS / GESTÃO',title:'Do relatório estático ao painel que ajuda a decidir.',problem:'Indicadores de marketing estavam espalhados, dificultando comparação de períodos, leitura de funil e priorização gerencial.',strategy:'Concentrar KPIs em uma visão executiva, com leitura de tendência e foco no que muda decisão.',execution:'Desenvolvimento do Dashboard Midas com comparativos mensais, KPIs, funil, insights e módulos específicos para campanhas e eventos.',result:'Mais velocidade para analisar, apresentar e discutir marketing com base em indicadores, mantendo histórico e contexto em uma única visão.'},
+  brand:{kicker:'CASE 04 / BRAND / EXPERIÊNCIA',title:'Marca que deixa de falar sozinha e vira experiência.',problem:'O desafio era fazer CBS Parafusos e Waves Plus ganharem presença, coerência e lembrança em um mercado técnico e altamente competitivo.',strategy:'Unir comunicação comercial, audiovisual, eventos, conteúdo e experiência física sob uma lógica de marca mais consistente.',execution:'Campanhas, Reels, storytelling de produto, ativações e operação de marca em eventos como a ExpoConstruir, além de materiais digitais e comerciais.',result:'Uma presença de marca mais viva e frequente, com marketing conectado a vendas, produto, eventos e expansão de canais.'}
+};
+
+const modal=q('#caseModal');
+const closeModal=q('.modal-close');
+function openCase(key){const data=cases[key];if(!data)return;q('#modalKicker').textContent=data.kicker;q('#modalTitle').textContent=data.title;q('#modalProblem').textContent=data.problem;q('#modalStrategy').textContent=data.strategy;q('#modalExecution').textContent=data.execution;q('#modalResult').textContent=data.result;modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');closeModal.focus()}
+function closeCase(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.classList.remove('modal-open')}
+qa('.case-openable').forEach(card=>{card.addEventListener('click',(e)=>{if(e.target.closest('.case-trigger')||!e.target.closest('a'))openCase(card.dataset.case)});card.addEventListener('keydown',(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCase(card.dataset.case)}})});
+closeModal.addEventListener('click',closeCase);modal.addEventListener('click',(e)=>{if(e.target===modal)closeCase()});document.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeCase()});
+
+const dot=q('.cursor-dot'),ring=q('.cursor-ring');
+if(matchMedia('(pointer:fine)').matches&&dot&&ring){document.addEventListener('mousemove',(e)=>{dot.style.left=`${e.clientX}px`;dot.style.top=`${e.clientY}px`;ring.animate({left:`${e.clientX}px`,top:`${e.clientY}px`},{duration:180,fill:'forwards'})});qa('a,button,.case-openable,.tilt-card').forEach(el=>{el.addEventListener('mouseenter',()=>ring.classList.add('active'));el.addEventListener('mouseleave',()=>ring.classList.remove('active'))})}
+
+qa('.tilt-card').forEach(card=>{card.addEventListener('mousemove',(e)=>{if(!matchMedia('(pointer:fine)').matches)return;const r=card.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5;const y=(e.clientY-r.top)/r.height-.5;card.style.transform=`perspective(900px) rotateX(${y*-4}deg) rotateY(${x*5}deg) translateY(-3px)`});card.addEventListener('mouseleave',()=>card.style.transform='')});
+
+qa('.magnetic').forEach(el=>{el.addEventListener('mousemove',(e)=>{if(!matchMedia('(pointer:fine)').matches)return;const r=el.getBoundingClientRect();const x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2);el.style.transform=`translate(${x*.12}px,${y*.12}px)`});el.addEventListener('mouseleave',()=>el.style.transform='')});
+
+const marquee=q('.marquee div');if(marquee)marquee.innerHTML+=marquee.innerHTML;
